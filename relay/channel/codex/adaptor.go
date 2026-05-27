@@ -3,8 +3,10 @@ package codex
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/QuantumNous/new-api/common"
@@ -96,6 +98,11 @@ func (a *Adaptor) ConvertOpenAIResponsesRequest(c *gin.Context, info *relaycommo
 		request.Instructions = json.RawMessage(`""`)
 	}
 
+	// Codex backend only accepts stream=true.
+	streamTrue := true
+	request.Stream = &streamTrue
+	info.IsStream = true
+
 	if isCompact {
 		return request, nil
 	}
@@ -104,6 +111,13 @@ func (a *Adaptor) ConvertOpenAIResponsesRequest(c *gin.Context, info *relaycommo
 	// rm max_output_tokens
 	request.MaxOutputTokens = nil
 	request.Temperature = nil
+	request.TopP = nil
+	request.TopLogProbs = nil
+	request.StreamOptions = nil
+
+	debugJson, _ := common.Marshal(request)
+	fmt.Fprintf(os.Stderr, "[DEBUG-CODEX] converted request: %s\n", string(debugJson))
+
 	return request, nil
 }
 

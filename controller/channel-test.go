@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -402,6 +403,7 @@ func testChannel(channel *model.Channel, testUserID int, testModel string, endpo
 			newAPIError: types.NewError(err, types.ErrorCodeJsonMarshalFailed),
 		}
 	}
+	fmt.Fprintf(os.Stderr, "[DEBUG-TEST] channel test request body: %s\n", string(jsonData))
 
 	//jsonData, err = relaycommon.RemoveDisabledFields(jsonData, info.ChannelOtherSettings)
 	//if err != nil {
@@ -851,6 +853,10 @@ func TestChannel(c *gin.Context) {
 	testModel := c.Query("model")
 	endpointType := c.Query("endpoint_type")
 	isStream, _ := strconv.ParseBool(c.Query("stream"))
+	// Codex backend only supports stream=true; force stream mode for tests.
+	if channel != nil && channel.Type == constant.ChannelTypeCodex {
+		isStream = true
+	}
 	testUserID, err := resolveChannelTestUserID(c)
 	if err != nil {
 		common.ApiError(c, err)
